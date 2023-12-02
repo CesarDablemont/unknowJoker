@@ -1,7 +1,6 @@
 const { ActivityType } = require('discord.js');
 const chalk = require('chalk');
 const sqlite3 = require('sqlite3').verbose();
-
 const db = new sqlite3.Database('./data/voiceTime.db');
 
 module.exports = {
@@ -34,30 +33,27 @@ module.exports = {
           const members = await guild.members.fetch();
           members.forEach(async (member) => {
             if (member.user.bot) return;
+            if (!member.voice.channel || member.voice.mute) return;
+
             const userId = member.id;
-            // console.log(userId);
 
             // Récupérer l'xp de l'utilisateur depuis la base de données
-            // const xp = await getUserXp(guildId, userId);
-            var xp = 0;
-            db.get('SELECT xp FROM voiceTime WHERE guildId = ? AND userId = ?', [guildId, userId], (err, row) => {
-              if (err) {
-                console.error(err);
-              } else {
-                xp = row ? row.xp : 0;
-              }
-            });
+            const xp = await getUserXp(guildId, userId);
 
             // Mettez à jour l'xp
             const updatedXp = xp + deltaTime;
 
+            // voir ce qu'il se passe
             console.log(`userID:${userId}, xp:${xp}, new xp:${updatedXp}`);
 
             // Ajoutez ou mettez à jour la base de données
             const stmt = db.prepare('INSERT OR REPLACE INTO voiceTime (guildId, userId, xp) VALUES (?, ?, ?)');
             stmt.run(guildId, userId, updatedXp);
             stmt.finalize();
-            // db.run(`INSERT OR REPLACE INTO voiceTime (guildId, userId, xp) VALUES (${guildId}, ${userId}, ${xp})`)
+
+            // verification de l'enregistrement de l'xp
+            let xpVerif = await getUserXp(guildId, userId);
+            console.log(`user xp: ${xpVerif}`);
           });
 
         } catch (error) {
