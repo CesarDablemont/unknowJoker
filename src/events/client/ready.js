@@ -18,68 +18,67 @@ module.exports = {
     console.log(chalk.green.bold(`Ready! ${client.user.tag} écoute de la musique!`));
 
     // Créez la table si elle n'existe pas
-    db.run('CREATE TABLE IF NOT EXISTS voiceTime (guildId TEXT, userId TEXT, xp INTEGER)');
+    db.run('CREATE TABLE IF NOT EXISTS voiceTime (id INTEGER PRIMARY KEY, guildId INTEGER, userId INTEGER, xp INTEGER)', function (err) {
+      if (err) return console.error(err);
 
-    deltaTime = 10;
-    setInterval(async () => {
+      deltaTime = 10;
+      setInterval(async () => {
 
-      console.log("new xp add loop");
-      deltaTime = getRandomInt(5) + 8;
+        // console.log("new xp add loop");
+        deltaTime = getRandomInt(5) + 8;
 
-      client.guilds.cache.forEach(async (guild) => {
-        const guildId = guild.id;
+        client.guilds.cache.forEach(async (guild) => {
+          const guildId = guild.id;
 
-        try {
-          const members = await guild.members.fetch();
-          members.forEach(async (member) => {
-            if (member.user.bot) return;
-            if (!member.voice.channel || member.voice.mute) return;
+          try {
+            const members = await guild.members.fetch();
+            members.forEach(async (member) => {
+              if (member.user.bot) return;
+              if (!member.voice.channel || member.voice.mute) return;
+              const userId = member.id;
 
-            const userId = member.id;
+              // si le membre n'est pas dans la db
+              db.get('SELECT * FROM voiceTime WHERE guildId = ? AND userId = ?', [guildId, userId], (err, row) => {
+                if (err) return console.error(err);
 
-            // Récupérer l'xp de l'utilisateur depuis la base de données
-            const xp = await getUserXp(guildId, userId);
+                // if user exist update it
+                if (row) {
+                  db.run('UPDATE voiceTime SET xp = ? WHERE id = ?', [row.xp + deltaTime, row.id], function (err) {
+                    if (err) return console.error(err);
 
-            // Mettez à jour l'xp
-            const updatedXp = xp + deltaTime;
+                    // console.log(`Xp update for userID:${userId} (xp:${row.xp + deltaTime})`);
+                  });
 
-            // voir ce qu'il se passe
-            console.log(`userID:${userId}, xp:${xp}, new xp:${updatedXp}`);
+                  // else insert new user
+                } else {
+                  db.run('INSERT INTO voiceTime (guildId, userId, xp) VALUES (?, ?, ?)', [guildId, userId, deltaTime], function (err) {
+                    if (err) return console.error(err);
+                  });
+                  // console.log(`A row has been inserted with id ${this.lastID}`)
+                }
+              });
+            });
 
-            // Ajoutez ou mettez à jour la base de données
-            const stmt = db.prepare('INSERT OR REPLACE INTO voiceTime (guildId, userId, xp) VALUES (?, ?, ?)');
-            stmt.run(guildId, userId, updatedXp);
-            stmt.finalize();
+          } catch (error) {
+            console.error(`Error fetching members: ${error.message}`);
+          }
+        });
 
-            // verification de l'enregistrement de l'xp
-            let xpVerif = await getUserXp(guildId, userId);
-            console.log(`user xp: ${xpVerif}`);
-          });
+        // // afficher la db
+        // db.all('SELECT * FROM voiceTime', (err, rows) => {
+        //   if (err) throw err;
 
-        } catch (error) {
-          console.error(`Error fetching members: ${error.message}`);
-        }
-      });
+        //   console.log('voiceTime:')
+        //   rows.forEach((row) => {
+        //     console.log(`ID: ${row.id}, guildId: ${row.guildId}, userId: ${row.userId}, xp: ${row.xp}`)
+        //   })
+        // });
 
-    }, deltaTime * 1000);
+      }, deltaTime * 1000);
+    });
 
   },
 };
-
-
-async function getUserXp(guildId, userId) {
-  return new Promise((resolve, reject) => {
-    db.get('SELECT xp FROM voiceTime WHERE guildId = ? AND userId = ?', [guildId, userId], (err, row) => {
-      if (err) {
-        console.error(err);
-        reject(err);
-      } else {
-        const xp = row ? row.xp : 0;
-        resolve(xp);
-      }
-    });
-  });
-}
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
