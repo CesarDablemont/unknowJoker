@@ -1,0 +1,21 @@
+{
+	"token": "MTA4Njc3Nzg4MDQwODc2NDQ5OA.G42Rd5.qVM0pSxGgtTFrWowD4eMUMUcJBQoYMt5Bd7MrM",
+	"clientId": "1086777880408764498",
+	"ownerId": "620639864278220823",
+	"color": "#ffffff",
+
+	"emojis": {
+		"pause": "<:pause:1083492103264420003>",
+		"play": "<:play:1083492104585625711>",
+		"previous": "<:previous:1083492106556948601>",
+		"next": "<:skip:1083492107701981194>",
+		"arrowLeft": "<:arrowleft:1083492100022210591>",
+		"arrowRight": "<:arrowright:1083492101645418528>",
+		"croix": "<:croix:1082608672112390145>",
+		"loop": "<:loop:1083492179789500486>",
+		"shuffle": "<:shuffle:1083492181907619971>",
+		"autoplay": "<:autoplay:1083492178485059684>",
+		"res": "<:res:1086014767308738665>",
+		"disk": "<:disk:1086018247918374956>"
+	}
+}
