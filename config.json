@@ -1,7 +1,7 @@
 {
-	"token": "MTA4Njc3Nzg4MDQwODc2NDQ5OA.G42Rd5.qVM0pSxGgtTFrWowD4eMUMUcJBQoYMt5Bd7MrM",
-	"clientId": "1086777880408764498",
-	"ownerId": "620639864278220823",
+	"token": "bot_token",
+	"clientId": "bot_id",
+	"ownerId": "your_id",
 	"color": "#ffffff",
 
 	"emojis": {
