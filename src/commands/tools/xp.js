@@ -1,6 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-// const fs = require('fs');
-// const dbPath = "./data/voiceTime.json";
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./data/voiceTime.db');
 
@@ -15,8 +13,6 @@ module.exports = {
 
   async execute(client, interaction) {
 
-    // const db = fs.readFileSync(dbPath);
-    // const data = JSON.parse(db);
     const user = interaction.options.getUser('user') ? interaction.options.getUser('user') : interaction.user;
     if (user.bot) return client.replyEmbed(client, interaction, '', `Les bots n'ont pas d'xp`);
 
@@ -24,41 +20,28 @@ module.exports = {
     const userId = user.id;
 
     db.get('SELECT xp FROM voiceTime WHERE guildId = ? AND userId = ?', [guildId, userId], (err, row) => {
+      if (err) return console.error(err);
 
-      if (err) {
-        console.error(err);
-      } else {
-        const xp = row ? row.xp : 0;
-
-        const embed = new EmbedBuilder()
-          .setColor(client.color)
-          .setTitle(`Temps de voc de ${user.tag}`)
-          .setDescription(`\`\`\`yaml\n${formatTime(xp)}\n\`\`\``)
-
-        interaction.reply({ embeds: [embed] });
-
+      if (!row) {
+        db.run('INSERT INTO voiceTime (guildId, userId, xp) VALUES (?, ?, ?)', [guildId, userId, 0], function (err) {
+          if (err) return console.error(err);
+        });
       }
+
+      const xp = row ? row.xp : 0;
+      const embed = new EmbedBuilder()
+        .setColor(client.color)
+        .setTitle(`Temps de voc de ${user.tag}`)
+        .setDescription(`\`\`\`yaml\n${formatTime(xp)}\n\`\`\``)
+
+      interaction.reply({ embeds: [embed] });
+
     });
-
-
-    // if (!data[guildId][userId]) {
-    //   data[guildId][userId] = {
-    //     xp: 0,
-    //     joinDate: 0
-    //   };
-
-    //   const pushData = JSON.stringify(data);
-    //   await fs.writeFile(dbPath, pushData, function (err) {
-    //     if (err) console.error(err);
-    //   });
-
-    // };
 
   },
 };
 
 function formatTime(s) {
-
   parseInt(s, 10);
 
   var heures = Math.floor(s / 3600);

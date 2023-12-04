@@ -1,7 +1,6 @@
-//https://stackoverflow.com/questions/65207693/leaderboard-command-for-json-database
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const fs = require('fs');
-const dbPath = "./data/voiceTime.json";
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('./data/voiceTime.db');
 const moment = require('moment');
 
 module.exports = {
@@ -11,93 +10,36 @@ module.exports = {
 
   async execute(client, interaction) {
 
-    var embed = await leaderboard(client, interaction);
-    await interaction.reply({ embeds: [embed] });
+    db.all('SELECT * FROM voiceTime ORDER BY xp DESC', async (err, rows) => {
+      if (err) throw err;
 
-    var startTime = new Date().getTime();
-    var interval = setInterval(async function(){
+      let user = client.user.id;
+      let membre = interaction.guild.members.cache.get(user);
 
-        if(new Date().getTime() - startTime > 900000){
-            clearInterval(interval);
-            return;
+      const embed = new EmbedBuilder()
+        .setColor(client.color)
+        .setTitle(`Top du Temps de voc (depuis le ${moment(membre.joinedAt).format('LL')})`)
+
+      for (let i = 0; i < 10; i++) {
+        if (i > rows.length - 1) {
+          break;
         }
-        var embed = await leaderboard(client, interaction);
-        await interaction.editReply({ embeds: [embed] });
-    }, 10000);  
 
-    // setInterval(async () => {
-    //   var embed = await leaderboard(client, interaction);
-    //   await interaction.editReply({ embeds: [embed] });
-    // }, 10000);
+        var j = i;
+        const user = await client.users.fetch(rows[i].userId).catch(() => null);
+        embed.addFields({
+          name: `${++j} | ${user.tag}`,
+          value: `\`\`\`yaml\n${formatTime(rows[i].xp)}\n\`\`\``
+        });
+      }
+
+      await interaction.reply({ embeds: [embed] });
+    });
 
   },
 };
 
-async function leaderboard(client, interaction){
-
-  const guildId = interaction.guild.id;
-
-  const db = fs.readFileSync(dbPath);
-  const data = JSON.parse(db);
-
-  const xp = data[guildId];
-  const sorted = [];
-  const keys = Object.keys(xp)
-  
-  for (let user in xp) {
-    const experience = xp[user].xp;
-    
-    const entry = {[keys[sorted.length]] : xp[user]}
-    
-    if (sorted.length === 0) {
-      sorted.push(entry);
-  
-      continue;
-    }
-    let i = 0;
-    while (sorted[i] !== undefined && sorted[i][Object.keys(sorted[i])].xp > experience) {
-      i++;
-    }
-      
-    sorted.splice(i, 0, entry)
-  }
-
-  let user = client.user.id;
-  let membre = interaction.guild.members.cache.get(user);
-
-  const embed = new EmbedBuilder()
-  embed.setColor(client.color)
-  embed.setTitle(`Top du Temps de voc (depuis le ${moment(membre.joinedAt).format('LL')})`)
-
-  for(let i = 0; i < 9; i++){
-    let j = i;
-    
-    try {
-
-      userID = Object.keys(sorted[i]).toString();
-      const user = await client.users.fetch(userID).catch(() => null);
-
-      // console.log("userID", userID);
-      // console.log("xp", data[guildId][userID].xp);
-      
-      embed.addFields({
-        name: `${++j} | ${user.tag}`,
-        value:  `\`\`\`yaml\n${formatTime(data[guildId][userID].xp)}\n\`\`\``
-      });
-      
-    } catch (err) {};
-
-    // const listed = sorted.toArray();
-    // const list = listed.map((user) => `${j++} | ${user.tag}`).join("\n")
-    // embed.setDescription(`\`\`\`yaml\n${list}\n\`\`\``)
-
-  }
-
-  return embed;
-}
-
 function formatTime(s) {
-
   parseInt(s, 10);
 
   var heures = Math.floor(s / 3600);
