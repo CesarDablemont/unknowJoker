@@ -1,7 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { QueryType } = require('discord-player');
-const fs = require('fs');
-const dbPath = "./data/music.json";
+const { useMainPlayer } = require('discord-player');
+const { SoundCloudExtractor } = require('@discord-player/extractor');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -16,27 +15,24 @@ module.exports = {
 
   async autocomplete(client, interaction) {
 
-    const query = interaction.options.getString('musique');
-    const results = await client.player.search(query, {
-      searchEngine: QueryType.SOUNDCLOUD_SEARCH
-    });
+    const player = useMainPlayer();
+    player.extractors.register(SoundCloudExtractor);
+    var query = await interaction.options.getString('musique');
+    if (query.length < 3) interaction.respond([]);
 
-    return interaction.respond(
-      results.tracks.slice(0, 10).map((t) => ({
-        name: t.title,
-        value: t.url
-      }))
-    );
+    var results = await player.search(query);
+    tracks = results.tracks.slice(0, 10).map((t) => ({
+      name: t.title,
+      value: t.url
+    }));
+    return interaction.respond(tracks);
+
 
   },
   async execute(client, interaction) {
 
-    const db = fs.readFileSync(dbPath);
-    const data = JSON.parse(db);
-
-    const guildId = interaction.guild.id;
-    if (data[guildId].djMode == "DJ Only" && !interaction.member.roles.cache.some(r => r.id == data[guildId].djRole))
-      return client.replyEmbed(client, interaction, '', "❌ | Il faut le rôle DJ pour utiliser cette commande !");
+    canPlay = await client.hasMusicPerm(client, interaction, "dj_only")
+    if (!canPlay) return;
 
     if (!interaction.member.voice.channel)
       return client.replyEmbed(client, interaction, '', "❌ | Tu doit être dans un channel vocal !");
@@ -44,10 +40,13 @@ module.exports = {
     if ((await interaction.guild.members.fetchMe()).voice.channel && (await interaction.guild.members.fetchMe()).voice.channel.id !== interaction.member.voice.channel.id)
       return client.replyEmbed(client, interaction, '', "❌ | Je suis déjà connecté ailleurs !");
 
-    const musique = interaction.options.getString('musique');
-    await interaction.deferReply();
+    const player = useMainPlayer();
+    player.extractors.register(YouTubeExtractor);
+    const query = interaction.options.getString('musique');
+    const searchResult = await player.search(query, { requestedBy: interaction.user })
 
-    const res = await client.player.play(interaction.member.voice.channel, musique, {
+    await interaction.deferReply();
+    const res = await player.play(interaction.member.voice.channel, searchResult, {
       nodeOptions: {
         metadata: {
           channel: interaction.channel,

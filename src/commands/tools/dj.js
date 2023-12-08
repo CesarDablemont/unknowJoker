@@ -22,7 +22,7 @@ module.exports = {
             .setRequired(true)
             .addChoices(
               { name: 'Off', value: 'off' },
-              { name: 'DJ Mode', value: 'dj_ode' },
+              { name: 'DJ Mode', value: 'dj_mode' },
               { name: 'DJ Only', value: 'dj_only' },
             ))),
 
@@ -30,7 +30,7 @@ module.exports = {
 
 
     const guildId = interaction.guild.id;
-    db.get(`SELECT * FROM servers WHERE guildId = ${guildId}`, (err, row) => {
+    db.get('SELECT * FROM servers WHERE guildId = ?', [guildId], (err, row) => {
       if (err) return console.error(err);
 
       if (interaction.options.getSubcommand() === 'role') {
@@ -41,7 +41,7 @@ module.exports = {
           `Le nouveau role est: ${role}`
         );
 
-        db.run(`UPDATE servers SET djRole = ${role.id}, WHERE id = ${row.id}`, function (err) {
+        db.run('UPDATE servers SET djRole = ? WHERE id = ?', [role.id, row.id], function (err) {
           if (err) return console.error(err);
         });
 
@@ -53,7 +53,7 @@ module.exports = {
           `Le nouveau mode est: **${mode}**`
         );
 
-        db.run(`UPDATE servers SET djMode = ${mode}, WHERE id = ${row.id}`, function (err) {
+        db.run('UPDATE servers SET djMode = ? WHERE id =?', [mode, row.id], function (err) {
           if (err) return console.error(err);
         });
       }

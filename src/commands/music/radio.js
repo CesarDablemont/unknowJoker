@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
-const fs = require('fs');
-const dbPath = "./data/music.json";
+const { useMainPlayer } = require('discord-player');
+const { YouTubeExtractor } = require('@discord-player/extractor');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,12 +26,8 @@ module.exports = {
 
   async execute(client, interaction) {
 
-    const db = fs.readFileSync(dbPath);
-    const data = JSON.parse(db);
-
-    const guildId = interaction.guild.id;
-    if (data[guildId].djMode == "DJ Only" && !interaction.member.roles.cache.some(r => r.id == data[guildId].djRole))
-      return client.replyEmbed(client, interaction, '', "❌ | Il faut le rôle DJ pour utiliser cette commande !");
+    canPlay = await client.hasMusicPerm(interaction, "dj_only");
+    if (!canPlay) return;
 
     if (!interaction.member.voice.channel)
       return client.replyEmbed(client, interaction, '', "❌ | Tu doit être dans un channel vocal !");
@@ -39,8 +35,14 @@ module.exports = {
     if ((await interaction.guild.members.fetchMe()).voice.channel && (await interaction.guild.members.fetchMe()).voice.channel.id !== interaction.member.voice.channel.id)
       return client.replyEmbed(client, interaction, '', "❌ | Je suis déjà connecté ailleurs !");
 
-    const radio = interaction.options.getString('radio');
-    const res = await client.player.play(interaction.member.voice.channel, radio, {
+    const player = useMainPlayer();
+    player.extractors.register(YouTubeExtractor);
+    const query = interaction.options.getString('radio');
+    const searchResult = await player.search(query, { requestedBy: interaction.user })
+
+    await interaction.deferReply();
+    const res = await player.play(interaction.member.voice.channel, searchResult, {
+
       nodeOptions: {
         metadata: {
           channel: interaction.channel,

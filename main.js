@@ -45,4 +45,5 @@ client.handleEvents();
 client.handleCommands();
 client.replyEmbed();
 client.sendEmbed();
+client.hasMusicPerm();
 client.login(token);
