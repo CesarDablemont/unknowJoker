@@ -1,28 +1,23 @@
 const { InteractionType } = require('discord.js');
-const fs = require('fs');
-const dbPath = "./data/music.json";
-const db = fs.readFileSync(dbPath);
-const data = JSON.parse(db);
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('./data/servers.db');
 
 module.exports = {
   name: "interactionCreate",
   async execute(interaction, client) {
 
     const guildId = interaction.guild.id;
-    if (!data[guildId]) {
-      data[guildId] = {
-        playMessage: "0",
-        playChannel: "0",
-        djRole: "0",
-        djMode: "Off"
-      };
+    db.run('CREATE TABLE IF NOT EXISTS servers (id INTEGER PRIMARY KEY, guildId VARCHAR(255), playChannel VARCHAR(255), playMessage VARCHAR(255), djRole VARCHAR(255), djMode TEXT)', function (err) {
 
-      const pushData = JSON.stringify(data);
-      await fs.writeFile(dbPath, pushData, function (err) {
-        if (err) console.error(err);
+      db.get(`SELECT * FROM servers WHERE guildId = ${guildId}`, (err, row) => {
+        if (err) return console.error(err);
+        if (row) return;
+
+        db.run(`INSERT INTO servers (guildId, playChannel, playMessage, djRole, djMode) VALUES (${guildId}, "", "", "", "off")`, function (err) {
+          if (err) return console.error(err);
+        });
       });
-    };
-
+    });
 
     if (interaction.isChatInputCommand()) {
       const { commands } = client;
