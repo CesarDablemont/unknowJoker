@@ -2,8 +2,6 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { useQueue } = require('discord-player');
 const { lyricsExtractor } = require('@discord-player/extractor');
 const genius = lyricsExtractor();
-const fs = require('fs');
-const dbPath = "./data/music.json";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -16,12 +14,8 @@ module.exports = {
 
   async execute(client, interaction) {
 
-    const db = fs.readFileSync(dbPath);
-    const data = JSON.parse(db);
-    
-    const guildId = interaction.guild.id;
-    if (data[guildId].djMode == "DJ Only" && !interaction.member.roles.cache.some(r => r.id == data[guildId].djRole))
-    return client.replyEmbed(client, interaction, '', "❌ | Il faut le rôle DJ pour utiliser cette commande !");
+    canPlay = await client.hasMusicPerm(interaction, "dj_only");
+    if (!canPlay) return;
 
     const queue = useQueue(interaction.guild.id);
     const track = interaction.options.getString('titre') || (queue?.currentTrack?.title);

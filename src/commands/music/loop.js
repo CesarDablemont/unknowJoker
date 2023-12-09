@@ -1,7 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { QueueRepeatMode, useQueue } = require('discord-player');
-const fs = require('fs');
-const dbPath = "./data/music.json";
 
 const repeatModes = [
   { name: 'Off', value: QueueRepeatMode.OFF },
@@ -24,13 +22,8 @@ module.exports = {
 
   async execute(client, interaction) {
 
-    const db = fs.readFileSync(dbPath);
-    const data = JSON.parse(db);
-
-    const guildId = interaction.guild.id;
-    if ((data[guildId].djMode == "DJ Mode" || data[guildId].djMode == "DJ Only")
-      && !interaction.member.roles.cache.some(r => r.id == data[guildId].djRole))
-      return client.replyEmbed(client, interaction, '', "❌ | Il faut le rôle DJ pour utiliser cette commande !");
+    canPlay = await client.hasMusicPerm(interaction, "dj_only", "dj_mode");
+    if (!canPlay) return;
 
     if (!interaction.member.voice.channel)
       return client.replyEmbed(client, interaction, '', "❌ | Tu doit être dans un channel vocal !");
