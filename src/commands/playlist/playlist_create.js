@@ -49,7 +49,8 @@ module.exports = {
             db.run(createSongsTable, (err) => {
               if (err) {
                 console.error(err);
-                return client.replyEmbed(client, interaction, '', '❌ | Une erreur est survenue lors de la création de la table des chansons.');
+                return client.replyEmbed(client, interaction, '',
+                  '❌ | Une erreur est survenue lors de la création de la table des chansons.');
               }
             });
           });

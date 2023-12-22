@@ -39,10 +39,8 @@ module.exports = {
 
       const player = useMainPlayer();
       player.extractors.register(YouTubeExtractor);
-      // const query = interaction.options.getString('musique');
       await interaction.deferReply();
 
-      const user = client.users.cache.get(row.user_id);
       const getSongsQuery = `SELECT * FROM songs_${playlistId}`;
       const songs = await new Promise((resolve) => {
         db.all(getSongsQuery, (err, songs) => {

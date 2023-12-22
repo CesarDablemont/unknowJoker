@@ -56,11 +56,6 @@ module.exports = {
     const songUrl = interaction.options.getString('musique');
     const songName = await getSongNameByUrl(songUrl)
 
-    // console.log("userId: ", userId);
-    // console.log("playlistId: ", playlistId);
-    // console.log("songName: ", songName);
-    // console.log("songUrl: ", songUrl);
-
     db.get(`SELECT * FROM playlists WHERE user_id = ? AND playlist_id = ?`, [userId, playlistId], (err, row) => {
       if (err) { console.error(err); }
       if (!row) return client.replyEmbed(client, interaction, '', `❌ | Tu n'as pas de playliste nommée ainsi.`);
