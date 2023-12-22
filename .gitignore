@@ -1,4 +1,7 @@
 node_modules
+test
+
 config.json
 servers.db
 voiceTime.db
+playlist.db
