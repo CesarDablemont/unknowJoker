@@ -43,7 +43,6 @@ module.exports = {
       const songsList = songs
         .map((song) => `${song.song_id}- [${song.song_name}](${song.song_url})`)
         .join('\n');
-      console.log(songsList);
 
       if (!songsList)
         return client.replyEmbed(client, interaction, `Playlist ${row.name} de ${user.username}`, "La playlist est vide.");
