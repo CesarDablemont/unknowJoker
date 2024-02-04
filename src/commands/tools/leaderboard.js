@@ -10,7 +10,8 @@ module.exports = {
 
   async execute(client, interaction) {
 
-    db.all('SELECT * FROM voiceTime ORDER BY xp DESC', async (err, rows) => {
+    const guildId = interaction.guild.id;
+    db.all('SELECT * FROM voiceTime WHERE guildId = ? ORDER BY xp DESC', [guildId], async (err, rows) => {
       if (err) throw err;
 
       let user = client.user.id;
